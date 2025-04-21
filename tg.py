@@ -1,58 +1,48 @@
 import asyncio
 import aiohttp
+from keep_alive import keep_alive
 from telethon import TelegramClient, events
+import telethon.tl.types
+
+# ===== Запуск мини-сервера для Railway =====
+keep_alive()
 
 # ===== Настройки Telegram API =====
-# IMPORTANT: These credentials are invalid. You need to get new ones:
-# 1. Go to https://my.telegram.org/auth
-# 2. Log in with your phone number (+37124830631)
-# 3. Go to "API development tools"
-# 4. Click "Create application"
-# 5. Fill in the form and submit
-# 6. Copy the new api_id and api_hash here
-api_id = '25448007'  # Replace with your new api_id
-api_hash = 'f4dba8e8c884bbabfd9cd6a742eeb695'  # Replace with your new api_hash
-source_channel = 'https://t.me/+Ib9nagXdcSowYjJk'
-my_channel = 'https://t.me/+CAh8rvxKHG0yODk0'
+api_id = 25448007
+api_hash = 'f4dba8e8c884bbabfd9cd6a742eeb695'
+
+# ===== Каналы =====
+# Используем именно ID канала
+source_channel = 1438042829  # ID канала-источника (без кавычек!)
+my_channel = 'schemes_alley'  # Имя твоего канала БЕЗ https://t.me/
 
 # ===== Настройки DeepSeek API =====
-# Для получения правильных данных:
-# 1. Зарегистрируйтесь на https://platform.deepseek.com/
-# 2. Создайте новый API ключ
-# 3. Скопируйте ваш API ключ и URL эндпоинта
-deepseek_api_url = 'https://api.deepseek.com/v1/chat/completions'  # Замените на ваш правильный URL
-api_key = 'sk-39d991d8c2664a3881a6bef71c172299'  # Замените на ваш API ключ
+deepseek_api_url = 'https://api.deepseek.com/v1/chat/completions'
+api_key = 'sk-39d991d8c2664a3881a6bef71c172299'
 
 # ===== Инициализация клиента =====
-client = TelegramClient('session_name', api_id, api_hash)
+client = TelegramClient('anon', api_id, api_hash)
 
 async def process_text_with_deepseek(text):
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json'
     }
-    
-    # Системный промпт, который будет использоваться для всех запросов
+
     system_prompt = """Ты - профессиональный редактор и аналитик. 
     Твоя задача - проанализировать предоставленный текст и создать новое, 
-    более структурированное и информативное сообщение. 
-    Сохраняй ключевую информацию, но излагай её более чётко и профессионально для канала в телеграмме который называется Схемный Переулок. Сделай так чтобы текст был понятен для людей в дружественной форме попунктам. Максимальное количество символов 500."""
-    
+    более структурированное и информативное сообщение для канала в телеграмме "Схемный Переулок". 
+    Сделай так чтобы текст был понятен для людей, в дружественной форме, попунктам. Максимальное количество символов 500."""
+
     payload = {
         'model': 'deepseek-chat',
         'messages': [
-            {
-                'role': 'system',
-                'content': system_prompt
-            },
-            {
-                'role': 'user',
-                'content': text
-            }
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': text}
         ],
         'temperature': 0.7
     }
-    
+
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(deepseek_api_url, headers=headers, json=payload) as response:
@@ -67,24 +57,19 @@ async def process_text_with_deepseek(text):
 @client.on(events.NewMessage(chats=source_channel))
 async def handler(event):
     try:
-        # Проверяем наличие медиа (файл, фото, документ, видео)
         if event.media:
-            # Получаем оригинальный текст сообщения
             original_text = event.text or ""
             print(f'Получен новый пост с файлом. Текст: {original_text[:100]}...')
 
-            # Если есть текст, обрабатываем его через DeepSeek
+            processed_text = ""
             if original_text:
                 processed_text = await process_text_with_deepseek(original_text)
                 print(f'Текст обработан через DeepSeek: {processed_text[:100]}...')
-            else:
-                processed_text = ""
 
-            # Отправляем файл с обработанным текстом в целевой канал
             await client.send_file(
                 my_channel,
                 event.media,
-                caption=processed_text
+                caption=processed_text if processed_text else None
             )
             print('Файл успешно отправлен в целевой канал')
         else:
@@ -94,7 +79,7 @@ async def handler(event):
 
 async def main():
     await client.start()
-    print('Бот запущен!')
+    print('Бот успешно запущен и ожидает новые сообщения...')
     await client.run_until_disconnected()
 
 if __name__ == '__main__':

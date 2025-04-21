@@ -13,7 +13,7 @@ api_hash = 'f4dba8e8c884bbabfd9cd6a742eeb695'
 
 # ===== Каналы =====
 # Используем именно ID канала
-source_channel = 1438042829  # ID канала-источника (без кавычек!)
+source_channel = -1001438042829  # ID канала-источника (без кавычек!)
 my_channel = 'schemes_alley'  # Имя твоего канала БЕЗ https://t.me/
 
 # ===== Настройки DeepSeek API =====

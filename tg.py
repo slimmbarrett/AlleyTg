@@ -8,8 +8,8 @@ import telethon.tl.types
 keep_alive()
 
 # ===== Настройки Telegram API =====
-api_id = 25448007
-api_hash = 'f4dba8e8c884bbabfd9cd6a742eeb695'
+api_id = 7132208
+api_hash = 'badc02193dbca8114da052096884a792'
 
 # ===== Каналы =====
 # Используем именно ID канала
